@@ -1,0 +1,349 @@
+/*
+ * Internship Tracker - Zoho Creator application script
+ * Owner: mythrayee.v.2024.aiml_raj | Register No: 241501125
+ */
+
+// ===== FORMS =====
+form Organization
+{
+	success message = "Organization Added Successfully"
+	Section
+	(
+		type = section
+	 	row = 1
+	 	column = 0   
+		width = medium
+	)
+	must have unique Organization_Name
+	(
+    	type = text
+		displayname = "Organization Name"
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Type
+	(
+		type = picklist
+		values = {"MNC","Startup","PSU","Research Lab","Academic"}
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	City
+	(
+    	type = text
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Mentor_Contact_Email
+	(
+    	type = email
+		displayname = "Mentor Contact Email"
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	
+	actions
+	{
+		on add
+		{
+			submit
+			(
+   				type = submit
+   				displayname = "Submit"
+			)
+		}
+		on edit
+		{
+			update
+			(
+   				type = submit
+   				displayname = "Update"
+			)
+			cancel
+			(
+   				type = cancel
+   				displayname = "Cancel"
+			)
+		}
+	}
+}
+
+form Internship
+{
+	success message = "Internship Added Successfully"
+	Section
+	(
+		type = section
+	 	row = 1
+	 	column = 0   
+		width = medium
+	)
+	must have Register_Number
+	(
+		type = text
+		displayname = "Register Number"
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Student_Name
+	(
+		type = text
+		displayname = "Student Name"
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Year
+	(
+		type = picklist
+		values = {"3","4"}
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Organization
+	(
+		type = picklist
+		values  = Organization.ID
+		displayformat = [Organization_Name]
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Domain
+	(
+		type = picklist
+		values = {"AIML","Web","Data Analytics","IoT","Cloud","Other"}
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Mode
+	(
+		type = radiobuttons
+		values = {"On-site","Remote","Hybrid"}
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Start_Date
+	(
+		type = date
+		displayname = "Start Date"
+		alloweddays = 0,1,2,3,4,5,6
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	End_Date
+	(
+		type = date
+		displayname = "End Date"
+		alloweddays = 0,1,2,3,4,5,6
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Duration_in_Weeks
+	(
+		type = number
+		displayname = "Duration in Weeks"
+	 	row = 1
+	 	column = 1   
+		width = medium
+		Formula_Properties
+		(
+			value =  (input.Start_Date.daysBetween(input.End_Date) / 7).toLong()
+			visibility = true
+		)
+	)
+	Stipend_per_Month
+	(
+		displayname = "Stipend per Month"
+		type = INR
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	must have Offer_Letter
+	(
+		type = upload file
+		displayname = "Offer Letter"
+		browse = local_drive
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Completion_Certificate
+	(
+		type = upload file
+		displayname = "Completion Certificate"
+		browse = local_drive
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	Status
+	(
+		type = picklist
+		values = {"Ongoing","Completed","Discontinued"}
+	 	row = 1
+	 	column = 1   
+		width = medium
+	)
+	
+	actions
+	{
+		on add
+		{
+			submit
+			(
+   				type = submit
+   				displayname = "Submit"
+			)
+		}
+		on edit
+		{
+			update
+			(
+   				type = submit
+   				displayname = "Update"
+			)
+			cancel
+			(
+   				type = cancel
+   				displayname = "Cancel"
+			)
+		}
+	}
+}
+
+// ===== REPORTS =====
+list All_Organizations
+{
+	displayName = "All Organizations"
+	show all rows from Organization
+	(
+		Organization_Name as "Organization Name"
+		Type
+		City
+		Mentor_Contact_Email as "Mentor Contact Email"
+	)
+}
+
+list All_Internships
+{
+	displayName = "All Internships"
+	show all rows from Internship
+	(
+		Register_Number as "Register Number"
+		Student_Name as "Student Name"
+		Year
+		Organization
+		Domain
+		Mode
+		Start_Date as "Start Date"
+		End_Date as "End Date"
+		Duration_in_Weeks as "Duration in Weeks"
+		Stipend_per_Month as "Stipend per Month"
+		Offer_Letter as "Offer Letter"
+		Completion_Certificate as "Completion Certificate"
+		Status
+	)
+}
+
+// ===== WORKFLOWS (Internship form) =====
+Validate_Internship_Dates as "Validate Internship Dates"
+{
+	type =  form
+	form = Internship
+	description = "Workflow"
+
+	record event = on add or edit
+
+	on validate
+	{
+		actions
+		{
+			custom deluge script
+			(
+				// Internship - validation on form submission (Created or Edited)
+				if(input.Start_Date != null && input.End_Date != null)
+				{
+					if(input.End_Date <= input.Start_Date)
+					{
+						alert "End Date must be after Start Date.";
+						cancel submit;
+					}
+					if(input.Start_Date.daysBetween(input.End_Date) < 14)
+					{
+						alert "Internship duration must be at least 2 weeks.";
+						cancel submit;
+					}
+				}
+			)
+		}
+	}
+}
+
+Certificate_On_Load as "Certificate On Load"
+{
+	type =  form
+	form = Internship
+	description = "Workflow"
+
+	record event = on add or edit
+
+	on load
+	{
+		actions
+		{
+			custom deluge script
+			(
+				// Internship - show Completion Certificate only when Status is Completed
+				if(input.Status == "Completed")
+				{
+					show Completion_Certificate;
+				}
+				else
+				{
+					hide Completion_Certificate;
+				}
+			)
+		}
+	}
+}
+
+Certificate_On_Status_Change as "Certificate On Status Change"
+{
+	type =  form
+	form = Internship
+	description = "Workflow"
+
+	record event = on add or edit
+
+	Status
+	on user input
+	{
+		actions
+		{
+			custom deluge script
+			(
+				// Internship - show Completion Certificate only when Status is Completed
+				if(input.Status == "Completed")
+				{
+					show Completion_Certificate;
+				}
+				else
+				{
+					hide Completion_Certificate;
+				}
+			)
+		}
+	}
+}
